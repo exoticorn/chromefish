@@ -1,0 +1,4 @@
+chromefish
+==========
+
+Stockfish for Chrome
