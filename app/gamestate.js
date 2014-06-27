@@ -83,7 +83,6 @@ define(['libs/chess.min.js'], function(Chess) {
           var move = history[i];
           moves += ' ' + move.from + move.to + (move.promotion ? move.promotion : '');
         }
-        self.engine.send('setoption name Clear Hash value 1');
         self.engine.send('position startpos moves' + moves);
         self.engine.send('go ' + self.clock.uci());
         self.clock.start(self.game.turn() == 'w' ? 'white' : 'black');

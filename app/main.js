@@ -41,7 +41,7 @@ require(['libs/react-0.10.0.js', 'app/chessboard.js', 'app/engine-connector.js',
     componentDidMount: function() {
       this.engine = new Engine();
       this.engine.start();
-      this.engine.send('setoption name Skill Level value 10');
+//      this.engine.send('setoption name Skill Level value 5');
       chrome.system.cpu.getInfo(function(info) {
         this.engine.send('setoption name Threads value ' + info.numOfProcessors);
       }.bind(this));

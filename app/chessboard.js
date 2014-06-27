@@ -132,6 +132,7 @@ define(['libs/chess.min.js', 'pieces_8bit', 'pieces_svg'], function(Chess, piece
         } else {
           x = piece.x;
           y = piece.y;
+          scale = t;
         }
         var img = pieces[piece.type];
         if(img) {
