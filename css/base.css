@@ -1,0 +1,19 @@
+body {
+  font-family: sans-serif;
+}
+
+pre {
+  font: 12px monospace;
+}
+
+.clock {
+  padding: 4px;
+  margin: 2px;
+  font-size: 200%;
+}
+
+.clock.running {
+  border: 1px solid black;
+  margin: 1px;
+  background: #ccb;
+}

@@ -9,41 +9,21 @@ define(['libs/chess.min.js'], function(Chess) {
       var self = this;
       self.white = {time: time * 1000, inc: inc * 1000};
       self.black = {time: time * 1000, inc: inc * 1000};
-      self.running = false;
-
-      function clockTick() {
-        if(self.running) {
-          var t = self[self.running.player].time + self.running.startTime - Date.now();
-          var timeToNextSecond = (t % 1000) + 1;
-          self.running.timeoutId = setTimeout(clockTick, timeToNextSecond);
-        }
-      }
 
       self.start = function(player) {
-        self.running = {player: player, startTime: Date.now()};
-        clockTick();
+        self[player].startTime = Date.now();
+        self.running = player;
       };
 
       self.stop = function() {
-        var c = self[self.running.player];
-        c.time -= Date.now() - self.running.startTime;
+        var c = self[self.running];
+        c.time -= Date.now() - c.startTime;
         if(c.time < 0) {
           c.flag = true;
         }
         c.time += c.inc;
-        clearTimeout(self.running.timeoutId);
-      };
-
-      self.times = function() {
-        var result = {
-          white: self.white.time / 1000,
-          black: self.black.time / 1000
-        };
-        if(self.running) {
-          var p = self.running.player;
-          result[p] = Math.max(0, result[p] + (self.running.startTime - Date.now()) / 1000);
-        }
-        return result;
+        delete c.startTime;
+        delete self.running;
       };
 
       self.uci = function() {
@@ -68,6 +48,9 @@ define(['libs/chess.min.js'], function(Chess) {
           }
           if(!self.game.game_over()) {
             startEngine();
+          }
+          if(self.onClockChanged) {
+            self.onClockChanged(self.clock);
           }
         }
         if(self.onreceive) {
