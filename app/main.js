@@ -1,3 +1,5 @@
+"use strict";
+
 require(['libs/react-0.10.0.js', 'app/chessboard.js', 'app/engine-connector.js',
   'app/gamestate.js'], function(React, Chessboard, Engine, gamestate) {
   var EngineLog = React.createClass({
@@ -28,7 +30,7 @@ require(['libs/react-0.10.0.js', 'app/chessboard.js', 'app/engine-connector.js',
       this.chessboard.updateSize();
     },
     render: function() {
-      return React.DOM.div({ style: { width: 400, height: 400 } });
+      return React.DOM.div({ style: { width: 500, height: 500 } });
     }
   });
 
@@ -38,7 +40,12 @@ require(['libs/react-0.10.0.js', 'app/chessboard.js', 'app/engine-connector.js',
     },
     componentDidMount: function() {
       this.engine = new Engine();
-      this.game = new gamestate.Game({ engine: this.engine });
+      this.engine.start();
+      this.engine.send('setoption name Skill Level value 10');
+      chrome.system.cpu.getInfo(function(info) {
+        this.engine.send('setoption name Threads value ' + info.numOfProcessors);
+      }.bind(this));
+      this.game = new gamestate.Game({ engine: this.engine, clock: new gamestate.Clock({ time: 1*60, inc: 0.5 }) });
       this.game.onPositionChanged = this.updatePosition;
       this.game.onreceive = this.refs.log.push;
     },
