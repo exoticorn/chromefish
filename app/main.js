@@ -31,7 +31,7 @@ require(['libs/react-0.10.0.js', 'chessboard', 'engine-connector',
       this.chessboard.updateSize();
     },
     render: function() {
-      return React.DOM.div({ style: { width: 500, height: 500 } });
+      return React.DOM.div({ className: 'board' });
     }
   });
 
@@ -58,11 +58,15 @@ require(['libs/react-0.10.0.js', 'chessboard', 'engine-connector',
       this.setState({ clock: clock });
     },
     render: function() {
-      return React.DOM.div(null,
-        ClockView(this.state.clock.black),
-        Board({ position: this.state.position }),
-        ClockView(this.state.clock.white),
-        EngineLog({ ref: 'log' })
+      return React.DOM.div({ id: 'main' },
+        React.DOM.div({ id: 'board-group' },
+          ClockView(this.state.clock.black),
+          Board({ position: this.state.position }),
+          ClockView(this.state.clock.white)
+        ),
+        React.DOM.div({ id: 'side-group' },
+          EngineLog({ ref: 'log' })
+        )
       );
     }
   });

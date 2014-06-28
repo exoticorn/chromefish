@@ -7,9 +7,12 @@ define(['libs/chess.min.js', 'pieces_8bit', 'pieces_svg'], function(Chess, piece
     div.appendChild(canvas);
 
     this.updateSize = function() {
-      if(canvas.width !== div.clientWidth || canvas.height !== div.clientHeight) {
-        canvas.width = div.clientWidth;
-        canvas.height = div.clientHeight;
+      if(this.parentWidth !== div.clientWidth || this.parentHeight !== div.clientHeight) {
+        this.parentWidth = div.clientWidth;
+        this.parentHeight = div.clientHeight;
+        var size = Math.floor(Math.min(div.clientWidth, div.clientHeight) / 8) * 8;
+        canvas.width = size;
+        canvas.height = size;
         redraw();
         return true;
       }
@@ -29,7 +32,7 @@ define(['libs/chess.min.js', 'pieces_8bit', 'pieces_svg'], function(Chess, piece
     this.position = function(newPos) {
       if(newPos) {
         chess.load(newPos);
-        
+
         var newPieces = [];
         var oldPieces = {};
         var array, piece;
@@ -58,7 +61,7 @@ define(['libs/chess.min.js', 'pieces_8bit', 'pieces_svg'], function(Chess, piece
             }
           }
         }
-        
+
         var i, j;
         for(i = 0; i < newPieces.length; ++i) {
           piece = newPieces[i];
@@ -75,7 +78,7 @@ define(['libs/chess.min.js', 'pieces_8bit', 'pieces_svg'], function(Chess, piece
           piece.t = Date.now();
           pieceState[piece.fieldName] = piece;
         }
-        
+
         for(piece in oldPieces) {
           for(i = 0; i < oldPieces[piece].length; ++i) {
             var p = oldPieces[piece][i];
@@ -87,7 +90,7 @@ define(['libs/chess.min.js', 'pieces_8bit', 'pieces_svg'], function(Chess, piece
             removedPieces.push(p);
           }
         }
-        
+
         window.requestAnimationFrame(redraw.bind(this));
       }
       return chess.fen();
@@ -114,7 +117,7 @@ define(['libs/chess.min.js', 'pieces_8bit', 'pieces_svg'], function(Chess, piece
           ctx.fillRect(x * size, y * size, size, size);
         }
       }
-      
+
       var animLeft = false;
       function drawPiece(piece) {
         var t = Math.min(1, (Date.now() - piece.t) * 0.005);
@@ -142,16 +145,16 @@ define(['libs/chess.min.js', 'pieces_8bit', 'pieces_svg'], function(Chess, piece
             img.width * scale,
             img.height * scale);
         }
-        
+
         return t < 1;
       }
 
       removedPieces = removedPieces.filter(drawPiece);
-      
+
       for(var field in pieceState) {
         drawPiece(pieceState[field]);
       }
-      
+
       if(animLeft) {
         window.requestAnimationFrame(redraw.bind(this));
       }
