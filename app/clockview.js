@@ -34,6 +34,9 @@ define(['libs/react-0.10.0.js'], function(React) {
       seconds -= minutes * 60;
       var timeString = ('0' + minutes).slice(-2) + ':' +
         ('0' + seconds).slice(-2);
+      if(this.props.flag) {
+        timeString += ' F';
+      }
       return React.DOM.div({ className: cls }, timeString);
     }
   });

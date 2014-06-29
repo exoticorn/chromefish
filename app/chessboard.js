@@ -158,7 +158,19 @@ define(['libs/chess.min.js', 'pieces_8bit', 'pieces_svg'], function(Chess, piece
       removedPieces = removedPieces.filter(drawPiece);
 
       for(var square in pieceState) {
-        drawPiece(pieceState[square]);
+        var piece = pieceState[square];
+        if(piece !== draggedPiece) {
+          drawPiece(pieceState[square]);
+        }
+      }
+
+      if(draggedPiece) {
+        ctx.save();
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+        ctx.shadowOffsetX = size / 10;
+        ctx.shadowOffsetY = size / 10;
+        drawPiece(draggedPiece);
+        ctx.restore();
       }
 
       if(animLeft) {
@@ -188,7 +200,7 @@ define(['libs/chess.min.js', 'pieces_8bit', 'pieces_svg'], function(Chess, piece
     }
 
     canvas.onmousedown = function(event) {
-      if(draggedPiece) {
+      if(draggedPiece || !this.interactive) {
         return;
       }
       var pos = toBoardPos(event);
@@ -234,7 +246,7 @@ define(['libs/chess.min.js', 'pieces_8bit', 'pieces_svg'], function(Chess, piece
         scheduleRedraw();
       } else {
         var piece = chess.get(posToSquare(pos));
-        if(piece && piece.color === chess.turn()) {
+        if(piece && piece.color === chess.turn() && this.interactive) {
           canvas.style.setProperty('cursor', 'pointer');
         } else {
           canvas.style.removeProperty('cursor');

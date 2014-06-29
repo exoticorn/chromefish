@@ -23,6 +23,7 @@ define(['libs/chess.min.js'], function(Chess) {
         c.time -= Date.now() - c.startTime;
         if(c.time < 0) {
           c.flag = true;
+          c.time = 0;
         }
         c.time += c.inc;
         delete c.startTime;
@@ -97,6 +98,10 @@ define(['libs/chess.min.js'], function(Chess) {
           startTurn();
         }
       }
+
+      self.isHumanTurn = function() {
+        return self.game.turn() == 'w';
+      };
 
       self.move = tryMove.bind(this);
     }

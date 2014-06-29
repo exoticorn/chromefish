@@ -26,10 +26,12 @@ require(['libs/react-0.10.0.js', 'chessboard', 'engine-connector',
       this.chessboard = new Chessboard(this.getDOMNode());
       this.chessboard.position(this.props.position);
       this.chessboard.onDragEnd = this.props.onDragEnd;
+      this.chessboard.interactive = this.props.interactive;
     },
     componentDidUpdate: function() {
       this.chessboard.position(this.props.position);
       this.chessboard.onDragEnd = this.props.onDragEnd;
+      this.chessboard.interactive = this.props.interactive;
       this.chessboard.updateSize();
     },
     render: function() {
@@ -44,7 +46,7 @@ require(['libs/react-0.10.0.js', 'chessboard', 'engine-connector',
     componentDidMount: function() {
       this.engine = new Engine();
       this.engine.start();
-      this.engine.send('setoption name Skill Level value 10');
+      this.engine.send('setoption name Skill Level value 5');
       chrome.system.cpu.getInfo(function(info) {
         this.engine.send('setoption name Threads value ' + info.numOfProcessors);
       }.bind(this));
@@ -67,7 +69,8 @@ require(['libs/react-0.10.0.js', 'chessboard', 'engine-connector',
       return React.DOM.div({ id: 'main' },
         React.DOM.div({ id: 'board-group' },
           ClockView(this.state.clock.black),
-          Board({ position: this.state.position, onDragEnd: this.onDragEnd }),
+          Board({ position: this.state.position, onDragEnd: this.onDragEnd,
+            interactive: this.game && this.game.isHumanTurn() }),
           ClockView(this.state.clock.white)
         ),
         React.DOM.div({ id: 'side-group' },
