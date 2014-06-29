@@ -19,7 +19,7 @@ define(['libs/chess.min.js', 'pieces_8bit', 'pieces_svg'], function(Chess, piece
       return false;
     };
 
-    var pieceSize = 0;
+    var tileSize = 0;
     var pieces = {};
     ['wp', 'bp', 'wr', 'br', 'wn', 'bn', 'wb', 'bb', 'wq', 'bq', 'wk', 'bk'].forEach(function(piece) {
       pieces[piece] = document.createElement('canvas');
@@ -28,9 +28,11 @@ define(['libs/chess.min.js', 'pieces_8bit', 'pieces_svg'], function(Chess, piece
     var chess = new Chess();
     var pieceState = {};
     var removedPieces = [];
+    var draggedPiece = undefined;
 
     this.position = function(newPos) {
       if(newPos) {
+        cancelDrag();
         chess.load(newPos);
 
         var newPieces = [];
@@ -38,9 +40,9 @@ define(['libs/chess.min.js', 'pieces_8bit', 'pieces_svg'], function(Chess, piece
         var array, piece;
         for(var y = 0; y < 8; ++y) {
           for(var x = 0; x < 8; ++x) {
-            var fieldName = String.fromCharCode(x + 97) + (8 - y);
-            piece = chess.get(fieldName);
-            var existingPiece = pieceState[fieldName];
+            var square = String.fromCharCode(x + 97) + (8 - y);
+            piece = chess.get(square);
+            var existingPiece = pieceState[square];
             if(piece) {
               piece = piece.color + piece.type;
               if(!existingPiece || existingPiece.type !== piece) {
@@ -49,14 +51,14 @@ define(['libs/chess.min.js', 'pieces_8bit', 'pieces_svg'], function(Chess, piece
                   array.push(existingPiece);
                   oldPieces[existingPiece.type] = array;
                 }
-                newPieces.push({ type: piece, x: x, y: y, fieldName: fieldName });
+                newPieces.push({ type: piece, x: x, y: y, square: square });
               }
             } else {
               if(existingPiece) {
                 array = oldPieces[existingPiece.type] || [];
                 array.push(existingPiece);
                 oldPieces[existingPiece.type] = array;
-                delete pieceState[fieldName];
+                delete pieceState[square];
               }
             }
           }
@@ -72,11 +74,11 @@ define(['libs/chess.min.js', 'pieces_8bit', 'pieces_svg'], function(Chess, piece
             oldPiece.oy = oldPiece.y;
             oldPiece.x = piece.x;
             oldPiece.y = piece.y;
-            oldPiece.fieldName = piece.fieldName;
+            oldPiece.square = piece.square;
             piece = oldPiece;
           }
           piece.t = Date.now();
-          pieceState[piece.fieldName] = piece;
+          pieceState[piece.square] = piece;
         }
 
         for(piece in oldPieces) {
@@ -91,7 +93,7 @@ define(['libs/chess.min.js', 'pieces_8bit', 'pieces_svg'], function(Chess, piece
           }
         }
 
-        window.requestAnimationFrame(redraw.bind(this));
+        scheduleRedraw();
       }
       return chess.fen();
     };
@@ -100,12 +102,16 @@ define(['libs/chess.min.js', 'pieces_8bit', 'pieces_svg'], function(Chess, piece
       redraw();
     }
 
+    function scheduleRedraw() {
+      requestAnimationFrame(redraw.bind(this));
+    }
+
     function redraw() {
       canvas.width = canvas.width;
       var size = Math.floor(Math.min(canvas.width, canvas.height) / 8);
-      if(size !== pieceSize) {
+      if(size !== tileSize) {
         pieces_svg(pieces, size);
-        pieceSize = size;
+        tileSize = size;
       }
       var ctx = canvas.getContext('2d');
 
@@ -151,13 +157,89 @@ define(['libs/chess.min.js', 'pieces_8bit', 'pieces_svg'], function(Chess, piece
 
       removedPieces = removedPieces.filter(drawPiece);
 
-      for(var field in pieceState) {
-        drawPiece(pieceState[field]);
+      for(var square in pieceState) {
+        drawPiece(pieceState[square]);
       }
 
       if(animLeft) {
         window.requestAnimationFrame(redraw.bind(this));
       }
     }
+
+    function toBoardPos(event) {
+      return {
+        x: event.layerX / tileSize,
+        y: event.layerY / tileSize
+      };
+    }
+
+    function posToSquare(pos) {
+      return String.fromCharCode(Math.floor(pos.x) + 97) +
+        (8 - Math.floor(pos.y));
+    }
+
+    function cancelDrag() {
+      if(draggedPiece) {
+        draggedPiece.x = draggedPiece.ox;
+        draggedPiece.y = draggedPiece.oy;
+        draggedPiece = undefined;
+        scheduleRedraw();
+      }
+    }
+
+    canvas.onmousedown = function(event) {
+      if(draggedPiece) {
+        return;
+      }
+      var pos = toBoardPos(event);
+      var square = posToSquare(pos);
+      var piece = chess.get(square);
+      if(piece && piece.color === chess.turn()) {
+        piece = pieceState[square];
+        if(piece) {
+          draggedPiece = piece;
+          piece.t = 1;
+          piece.ox = piece.x;
+          piece.oy = piece.y;
+          scheduleRedraw();
+        }
+      }
+    }.bind(this);
+
+    canvas.onmouseup = function(event) {
+      if(!draggedPiece) {
+        return;
+      }
+      var pos = toBoardPos(event);
+      var square = posToSquare(pos);
+      var piece = draggedPiece;
+      if(this.onDragEnd) {
+        draggedPiece = undefined;
+        var accept = this.onDragEnd({ from: piece.square, to: square });
+        if(!accept) {
+          piece.x = piece.ox;
+          piece.y = piece.oy;
+          scheduleRedraw();
+        }
+      } else {
+        cancelDrag();
+      }
+    }.bind(this);
+
+    canvas.onmousemove = function(event) {
+      var pos = toBoardPos(event);
+      if(draggedPiece) {
+        draggedPiece.x = pos.x - 0.5;
+        draggedPiece.y = pos.y - 0.5;
+        scheduleRedraw();
+      } else {
+        var piece = chess.get(posToSquare(pos));
+        if(piece && piece.color === chess.turn()) {
+          canvas.style.setProperty('cursor', 'pointer');
+        } else {
+          canvas.style.removeProperty('cursor');
+        }
+      }
+    }.bind(this);
   };
 });

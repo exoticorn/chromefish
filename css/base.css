@@ -14,13 +14,15 @@ pre {
 .clock {
   flex: 0 0 auto;
   padding: 4px;
-  margin: 8px;
+  margin: 16px;
   margin-left: 32px;
   border: 1px solid #ddd;
   border-radius: 8px;
   width: 100px;
   font-size: 200%;
+  line-height: 100%;
   font-weight: bold;
+  text-align: center;
   transition: box-shadow 0.2s, background-color 0.5s;
   box-shadow: 1px 1px 1px #ccc;
 }
@@ -45,7 +47,7 @@ pre {
 }
 
 .board {
-  margin: 8px;
+  margin: 0px 8px;
   flex: 1 1 100px;
 }
 

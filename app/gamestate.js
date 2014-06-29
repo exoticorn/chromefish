@@ -13,6 +13,9 @@ define(['libs/chess.min.js'], function(Chess) {
       self.start = function(player) {
         self[player].startTime = Date.now();
         self.running = player;
+        if(self.onChanged) {
+          self.onChanged(this);
+        }
       };
 
       self.stop = function() {
@@ -24,6 +27,9 @@ define(['libs/chess.min.js'], function(Chess) {
         c.time += c.inc;
         delete c.startTime;
         delete self.running;
+        if(self.onChanged) {
+          self.onChanged(this);
+        }
       };
 
       self.uci = function() {
@@ -37,27 +43,39 @@ define(['libs/chess.min.js'], function(Chess) {
       self.clock = params.clock || new gamestate.Clock();
       self.engine = params.engine;
       self.game = new Chess();
+      var started = false;
 
       function onreceive(line) {
         var match = line.match(/^bestmove ([a-h][1-8])([a-h][1-8])([qrbk])?/);
         if(match) {
-          self.clock.stop();
-          self.game.move({from: match[1], to: match[2], promotion: match[3]});
-          if(self.onPositionChanged) {
-            self.onPositionChanged(self.game.fen());
-          }
-          if(!self.game.game_over()) {
-            startEngine();
-          }
-          if(self.onClockChanged) {
-            self.onClockChanged(self.clock);
-          }
+          tryMove({from: match[1], to: match[2], promotion: match[3]});
         }
         if(self.onreceive) {
           self.onreceive(line);
         }
       }
       self.engine.onreceive = onreceive;
+
+      function startTurn() {
+        if(self.game.turn() == 'b') {
+          startEngine();
+        }
+        self.clock.start(self.game.turn() == 'w' ? 'white' : 'black');
+      }
+
+      function tryMove(move) {
+        move = self.game.move(move);
+        if(move) {
+          self.clock.stop();
+          if(self.onPositionChanged) {
+            self.onPositionChanged(self.game.fen());
+          }
+          if(!self.game.game_over()) {
+            startTurn();
+          }
+        }
+        return move;
+      }
 
       function startEngine() {
         var moves = '';
@@ -68,14 +86,19 @@ define(['libs/chess.min.js'], function(Chess) {
         }
         self.engine.send('position startpos moves' + moves);
         self.engine.send('go ' + self.clock.uci());
-        self.clock.start(self.game.turn() == 'w' ? 'white' : 'black');
       }
 
       self.position = function() {
         return self.game.fen();
       };
 
-      startEngine();
+      self.start = function() {
+        if(!started) {
+          startTurn();
+        }
+      }
+
+      self.move = tryMove.bind(this);
     }
   };
   return gamestate;
