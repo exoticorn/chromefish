@@ -227,7 +227,7 @@ define(['libs/chess.min.js', 'pieces_8bit', 'pieces_svg'], function(Chess, piece
       var piece = draggedPiece;
       if(this.onDragEnd) {
         draggedPiece = undefined;
-        var accept = this.onDragEnd({ from: piece.square, to: square });
+        var accept = this.onDragEnd({ from: piece.square, to: square, promotion: 'q' });
         if(!accept) {
           piece.x = piece.ox;
           piece.y = piece.oy;

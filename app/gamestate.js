@@ -1,6 +1,6 @@
 "use strict";
 
-define(['libs/chess.min.js'], function(Chess) {
+define(['libs/chess.min.js', 'book'], function(Chess, Book) {
   var gamestate = {
     Clock: function(params) {
       params = params || {};
@@ -45,6 +45,7 @@ define(['libs/chess.min.js'], function(Chess) {
       self.engine = params.engine;
       self.game = new Chess();
       var started = false;
+      var book = new Book('book.bin');
 
       function onreceive(line) {
         var match = line.match(/^bestmove ([a-h][1-8])([a-h][1-8])([qrbk])?/);
