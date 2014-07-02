@@ -46,6 +46,7 @@ define(['libs/chess.min.js', 'book'], function(Chess, Book) {
       self.game = new Chess();
       var started = false;
       var book = new Book('book.bin');
+      var numBookMisses = 0;
 
       function onreceive(line) {
         var match = line.match(/^bestmove ([a-h][1-8])([a-h][1-8])([qrbk])?/);
@@ -59,10 +60,19 @@ define(['libs/chess.min.js', 'book'], function(Chess, Book) {
       self.engine.onreceive = onreceive;
 
       function startTurn() {
-        if(self.game.turn() == 'b') {
-          startEngine();
-        }
         self.clock.start(self.game.turn() == 'w' ? 'white' : 'black');
+        if(self.game.turn() == 'b') {
+          var bookMove = numBookMisses < 3 ? book.lookup(self.game.fen()) : null;
+          if(bookMove) {
+            bookMove = tryMove(bookMove);
+          }
+          if(bookMove) {
+            numBookMisses = 0;
+          } else {
+            ++numBookMisses;
+            startEngine();
+          }
+        }
       }
 
       function tryMove(move) {

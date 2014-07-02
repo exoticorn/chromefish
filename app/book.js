@@ -256,9 +256,7 @@ define(function() {
       keyHi ^= randomHigh[780];
       keyLo ^= randomLow[780];
     }
-    if(keyHi < 0) { keyHi += 0x100000000; }
-    if(keyLo < 0) { keyLo += 0x100000000; }
-    return { hi: keyHi, lo: keyLo };
+    return { hi: keyHi >>> 0, lo: keyLo >>> 0 };
   }
 
   function testKey(fen, key) {
@@ -280,15 +278,18 @@ define(function() {
   testKey('rnbqkbnr/p1pppppp/8/8/PpP4P/8/1P1PPPP1/RNBQKBNR b KQkq c3 0 3', '3c8123ea7b067637');
   testKey('rnbqkbnr/p1pppppp/8/8/P6P/R1p5/1P1PPPP1/1NBQKBNR b Kkq - 0 4', '5c3f9b829b279560');
 
+  var promotionPieces = [undefined, 'n', 'b', 'r', 'q'];
+
   return function(url) {
     var self = this;
+    var data = null;
     this.ready = new Promise(function(resolve, reject) {
       var request = new XMLHttpRequest();
       request.open('GET', url, true);
       request.responseType = 'arraybuffer';
       request.onload = function() {
         if(request.status === 200) {
-          self.data = request.response;
+          data = request.response;
           resolve();
         } else {
           reject(request.statusText);
@@ -298,9 +299,51 @@ define(function() {
     });
 
     this.lookup = function(fen) {
-      if(!self.data) {
+      if(!data) {
         return null;
       }
+      var key = getKey(fen);
+
+      var view = new DataView(data);
+      var numEntries = Math.floor(data.byteLength / 16);
+
+      function compareKey(index) {
+        if(index < 0) return -1;
+        if(index >= numEntries) return 1;
+        var offset = index * 16;
+        var hi = view.getUint32(offset);
+        var lo = view.getUint32(offset + 4);
+        return hi === key.hi ? lo - key.lo : hi - key.hi;
+      }
+
+      function findKey(min, max) {
+        if(max - min <= 1) return min;
+        var mid = Math.floor((min + max) / 2);
+        if(compareKey(mid) > 0) return findKey(min, mid);
+        return findKey(mid, max);
+      }
+
+      var index = findKey(0, numEntries);
+      var weightSum = 0;
+      while(compareKey(index) === 0) {
+        weightSum += view.getUint16(index * 16 + 10);
+        index--;
+      }
+
+      if(weightSum === 0) {
+        return null;
+      }
+
+      var weightLeft = Math.random() * weightSum;
+      while(weightLeft >= 0) {
+        weightLeft -= view.getUint16(++index * 16 + 10);
+      }
+
+      var move = view.getUint16(index * 16 + 8);
+      var to = String.fromCharCode(97 + (move & 7)) + (((move >> 3) & 7) + 1);
+      var from = String.fromCharCode(97 + ((move >> 6) & 7)) + (((move >> 9) & 7) + 1);
+      var promotion = promotionPieces[move >> 12];
+      return { from: from, to: to, promotion: promotion };
     };
   };
 })
