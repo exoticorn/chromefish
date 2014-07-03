@@ -1,8 +1,8 @@
 "use strict";
 
 require(['libs/react-0.10.0.js', 'chessboard', 'engine-connector',
-  'gamestate', 'clockview'],
-  function(React, Chessboard, Engine, gamestate, ClockView) {
+  'gamestate', 'clockview', 'movelist'],
+  function(React, Chessboard, Engine, gamestate, ClockView, MoveList) {
   var EngineLog = React.createClass({
     getInitialState: function() { return { lines: [] }; },
     push: function(line) {
@@ -41,7 +41,7 @@ require(['libs/react-0.10.0.js', 'chessboard', 'engine-connector',
 
   var App = React.createClass({
     getInitialState: function() {
-      return { position: 'start', clock: new gamestate.Clock({ time: 3*60, inc: 2 }) };
+      return { position: 'start', moves: [], clock: new gamestate.Clock({ time: 3*60, inc: 2 }) };
     },
     componentDidMount: function() {
       this.engine = new Engine();
@@ -56,8 +56,8 @@ require(['libs/react-0.10.0.js', 'chessboard', 'engine-connector',
       this.game.onreceive = this.refs.log.push;
       this.game.start();
     },
-    updatePosition: function(pos) {
-      this.setState({ position: pos });
+    updatePosition: function(pos, moves) {
+      this.setState({ position: pos, moves: moves });
     },
     updateClock: function(clock) {
       this.setState({ clock: clock });
@@ -74,7 +74,8 @@ require(['libs/react-0.10.0.js', 'chessboard', 'engine-connector',
           ClockView(this.state.clock.white)
         ),
         React.DOM.div({ id: 'side-group' },
-          EngineLog({ ref: 'log' })
+          EngineLog({ ref: 'log' }),
+          MoveList({ moves: this.state.moves })
         )
       );
     }

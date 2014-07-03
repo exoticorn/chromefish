@@ -64,6 +64,22 @@ pre {
   flex-direction: column;
 }
 
-.board-group > pre {
+.board-group pre {
   flex: 0 0 80px;
+}
+
+.move-list {
+  flex: 1 1 100px;
+  overflow: scroll;
+}
+
+.move-list table {
+  border-collapse: collapse;
+  border: 1px solid #eed;
+  font-size: 150%;
+}
+
+.move-list td {
+  padding: 0.3em;
+  border: 1px solid #eed;
 }

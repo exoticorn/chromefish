@@ -80,7 +80,7 @@ define(['libs/chess.min.js', 'book'], function(Chess, Book) {
         if(move) {
           self.clock.stop();
           if(self.onPositionChanged) {
-            self.onPositionChanged(self.game.fen());
+            self.onPositionChanged(self.game.fen(), self.game.history());
           }
           if(!self.game.game_over()) {
             startTurn();
